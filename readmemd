@@ -1,1 +1,119 @@
-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
+# ─── Copilot SDK ───────────────────────────────────
+# Model to use for summarization
+COPILOT_MODEL=claude-sonnet-4-6
+
+# ─── Server ────────────────────────────────────────
+SERVER_PORT=4000
+WEB_ORIGIN=http://localhost:3000
+
+# ─── Web ───────────────────────────────────────────
+NEXT_PUBLIC_API_URL=http://localhost:4000
+
+GITHUB_TOKEN=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
+
+# 🤖 SDLC Copilot — File Summarizer
+
+> Fetch any file from a GitHub repo and get an AI-powered summary — built with **GitHub Copilot SDK**, **Next.js**, **Express**, and **Turborepo**.
+
+## Architecture
+
+```
+sdlc-copilot/
+├── apps/
+│   ├── web/        ← Next.js 15 frontend (port 3000)
+│   └── server/     ← Express API + Copilot SDK (port 4000)
+├── packages/
+│   └── shared/     ← Shared TypeScript types
+├── turbo.json
+└── package.json
+```
+
+**Flow:**
+1. User enters **owner / repo / file path** in the UI
+2. Frontend streams a request to the Express server via SSE
+3. Server creates a Copilot SDK session with the **GitHub MCP server**
+4. Copilot uses GitHub MCP tools to fetch the file, then summarizes it
+5. Summary streams back to the UI in real-time (Markdown rendered)
+
+## Prerequisites
+
+| Requirement | Version |
+|---|---|
+| **Node.js** | 18+ |
+| **GitHub Copilot CLI** | latest |
+| **npm** | 10+ |
+
+### Install & authenticate Copilot CLI
+
+```bash
+npm install -g @github/copilot-cli
+copilot auth login
+copilot --version   # verify
+```
+
+## Quick Start
+
+```bash
+# 1. Clone / navigate to the project
+cd sdlc-copilot
+
+# 2. Copy env file and customise if needed
+cp .env.example .env
+
+# 3. Install all dependencies (workspaces + turbo)
+npm install
+
+# 4. Start both apps in dev mode
+npm run dev
+```
+
+This runs:
+- **Web UI** → http://localhost:3000
+- **API Server** → http://localhost:4000
+
+## Configuration (.env)
+
+| Variable | Default | Description |
+|---|---|---|
+| `COPILOT_MODEL` | `claude-sonnet-4-6` | Model for summarization |
+| `SERVER_PORT` | `4000` | Express server port |
+| `WEB_ORIGIN` | `http://localhost:3000` | CORS origin |
+| `NEXT_PUBLIC_API_URL` | `http://localhost:4000` | API base URL for the frontend |
+
+## API Endpoints
+
+### `POST /api/summarize`
+Returns the full summary as JSON.
+
+```json
+{
+  "owner": "facebook",
+  "repo": "react",
+  "filePath": "README.md",
+  "ref": "main"
+}
+```
+
+### `POST /api/summarize/stream`
+Returns an SSE stream of summary chunks. Same request body.
+
+### `GET /api/health`
+Health check.
+
+## Tech Stack
+
+- **Monorepo**: Turborepo + npm workspaces
+- **Frontend**: Next.js 15, React 19, react-markdown
+- **Backend**: Express 4, GitHub Copilot SDK (`@github/copilot-sdk`)
+- **AI**: Copilot SDK → GitHub MCP server → file fetch + summarization
+- **Language**: TypeScript throughout
+
+## How It Works
+
+The server uses the Copilot SDK's **MCP (Model Context Protocol)** integration to connect to `https://api.githubcopilot.com/mcp/`. This gives the model access to GitHub's MCP tools — including the ability to read file contents from any public repo. The model fetches the file via these tools, then produces a structured Markdown summary.
+
+## License
+
+MIT
+
+
